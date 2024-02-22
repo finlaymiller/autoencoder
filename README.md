@@ -1,11 +1,28 @@
 # Autoencoders for MIDI
 
+## TODOs
+
+1. ~~Fix random dropped samples during shifting~~
+  (solution: can't v-shift enough times if the parent sample occupies too much of the available v-space)
+2. ~~Fix `tqdm` stuff~~
+3. ~~change generated/saved temp images to be NP arrays instead of .PNGs, that's stupid~~
+4. ~~get overfitting working~~
+5. ~~clean up review pipeline~~
+6. clean up imports and update load libraries section below
+7. clean up shift -> noising double double-for loops, unnecessary
+8. add variable velocity scaling to augmentation step
+9. implement batching
+10. fix up/down shift labeling
+11. why isn't the padding 0.0?
+
 ## Model
 
 Model is based off [this](https://colab.research.google.com/github/ashishpatel26/Awesome-Pytorch-Tutorials/blob/main/10.Pytorch%20AutoEncoder%20Neural%20Network%20for%20Image%20Denoising.ipynb).
 
 ## Inputs and Outputs
+
 ### Input
+
 The input is one or more Ableton projects. Each live project contains 2 tracks:
 1. A MIDI track which has 1 or more midi clips of piano music on it
 2. an audio track which has a recording of the music being played as well as an audible metronome and some voice annotations
@@ -39,9 +56,6 @@ Remaining to try is quantizing the piano rolls to some degree (start with 12 sec
 4. more modifications of velocities
 
 ### Experiments
-#### Overfit
-![overfit](images/overfit.png)
-
 #### Default Settings
 | Setting       | Value |
 | ------------- | ----- |
@@ -53,4 +67,10 @@ Remaining to try is quantizing the piano rolls to some degree (start with 12 sec
 ![default train](images/default_loss.png)
 ![default](images/default_results.png)
 
+#### Overfit
+How many images does it take until the model isn't able to overfit as cleanly?
+
+![overfit](images/overfit.png)
+
 #### Little Noise
+![small noise](images/little_nois.png)
