@@ -1,7 +1,6 @@
 video
 runs
-
-all_loops.npz
+input_data
 
 .venv
 .ipynb_checkpoints
