@@ -7,11 +7,13 @@ class MIDILoopDataset(Dataset):
     def __init__(
         self,
         data,
+        multiplier: int = 1,
         transforms=None,
-        multiplier: int=1,
     ):
         self.data = data * multiplier
         self.transforms = transforms
+
+        print(f"Created dataset with {len(self.data)} images")
 
     def __len__(self):
         return len(self.data)

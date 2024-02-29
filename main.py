@@ -7,8 +7,6 @@ from omegaconf import OmegaConf
 from models.autoencoder import AutoEncoder, Encoder, Decoder
 from data.augmenter import DataAugmenter
 from train import Trainer
-from utils.printer import Printer
-
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="train a model on MIDI data")
@@ -30,21 +28,27 @@ if __name__ == "__main__":
     print(f"running with arguments:\n{args}")
     print(f"running with parameters:\n{params}")
 
+    # dataset setup
     augmenter = DataAugmenter(args.data_dir, params.augmenter)
-    dataset = augmenter.augment(True)
+    dataset = augmenter.augment()
     loader = DataLoader(
         dataset,
         batch_size=params.loader.batch_size,
         shuffle=params.loader.shuffle,
         num_workers=params.loader.num_workers,
     )
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    encoder = Encoder(params.encoder)
-    decoder = Decoder(params.decoder)
-    model = AutoEncoder().to(device)
-    # model = Autoencoder(encoder, decoder).to(device)
-    trainer = Trainer(model, params.model_name, loader, device, params.trainer)
 
+    # model setup
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = AutoEncoder().to(device)
+    # encoder = Encoder(params.encoder)
+    # decoder = Decoder(params.decoder)
+    # model = Autoencoder(encoder, decoder).to(device)
+
+    # trainer setup
+    trainer = Trainer(model, params.model_name, loader, device, params.trainer)
     trainer.train()
     test_label, test_image = augmenter.get_clean()
-    trainer.test_reconstruction(test_image, test_label, args.param_file)
+    trainer.test_reconstruction(
+        test_image, test_label, args.param_file, params.augmenter.overfit
+    )

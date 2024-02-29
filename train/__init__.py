@@ -13,12 +13,15 @@ from tqdm import tqdm
 from utils.image import format_image, plot_images
 from data.augmentation import noise
 
+from typing import List
+
 
 class Trainer:
     model: torch.nn.Module
     train_dl: DataLoader
     val_dl: DataLoader
     optimizer: Optimizer
+    train_loss: List = []
 
     def __init__(
         self,
@@ -105,10 +108,12 @@ class Trainer:
 
         print(f"done training! loss is", self.train_loss)
 
-    def test_reconstruction(self, image, label: str, run_file=None) -> None:
+    def test_reconstruction(
+        self, image, label: str, run_file=None, overfit: bool = False
+    ) -> None:
         """"""
-        print(f"testing {self.model_name} image reconstruction on {label}")
-        noisy_image = noise(image)
+        print(f"testing {self.model_name} image reconstruction on {label}", image.shape)
+        noisy_image = image  # noise(image)
         noisy_image = noisy_image.to(self.device)
 
         output = self.model(noisy_image)

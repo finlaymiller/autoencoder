@@ -10,6 +10,7 @@ from typing import List
 
 from data.dataset import MIDILoopDataset
 from data.augmentation import vertical_shift, smear, noise
+from utils.image import format_image
 
 
 class DataAugmenter:
@@ -46,17 +47,18 @@ class DataAugmenter:
 
         return f"ad_{self.params.factor}{v_str}{s_str}{n_str}"
 
-    def get_clean(self, index: int | None = None) -> tuple:
-        """return an image from the default input dataset"""
-        clean_image = ()
-        if os.path.exists(self.default_set):
+    def get_clean(self, index: int | None = None):
+        """return an image from the default input dataset, unless overfitting, then return from the actual dataset"""
+        if os.path.exists(self.default_set) and not self.params.overfit:
             with np.load(self.default_set) as f:
                 if index is None:
-                    index = int(random.uniform(0, len(list(f.items()))))
-                    clean_image = list(f.items())[index]
+                    index = int(random.uniform(0, len(self._n2l(f))))
+                    clean_image = self._n2l(f)[index]
         else:
-            print(f"couldn't find default dataset at {self.dataset_path}")
-            raise FileNotFoundError
+            print(
+                f"not getting clean image from default dataset, falling back on test set"
+            )
+            clean_image = self.dataset[0]
 
         return clean_image
 
@@ -67,10 +69,10 @@ class DataAugmenter:
         dataset_found = False
         if os.path.exists(self.dataset_path + ".npz"):
             print(
-                f"found a {os.path.getsize(self.dataset_path + '.npz')}B dataset matching the current parameters at\n\t{self.dataset_path}\nloading from there"
+                f"found a {os.path.getsize(self.dataset_path + '.npz')}B dataset matching the current parameters at\n\t{self.dataset_path}\nloading from there..."
             )
             with np.load(self.dataset_path + ".npz") as f:
-                self.dataset = MIDILoopDataset(list(f.items()))
+                self.dataset = MIDILoopDataset(self._n2l(f))
             dataset_found = True
         else:
             print(
@@ -95,11 +97,21 @@ class DataAugmenter:
             raise FileNotFoundError
 
     def augment(self, force_rebuild: bool = False):
-        """augments a set of passed-in images by a factor of $factor^2$"""
-        if not self.load() and force_rebuild:
-            print(f"generating new augmentation from {self.default_set}")
+        """augments a set of passed-in images by a factor of factor^2"""
 
+        if self.params.overfit:
             with np.load(self.default_set) as f:
+                print(f"overfit test activated")
+                data = self._n2l(f)
+                random.shuffle(data)
+                random_image = data[self.params.overfit_index]
+                self.dataset = MIDILoopDataset(
+                    [(random_image[0], format_image(random_image[1]))],
+                    self.params.overfit_length,
+                )
+        elif not self.load():
+            with np.load(self.default_set) as f:
+                print(f"generating new augmentation from {self.default_set}")
                 dataset_augmented = self._augment(self._n2l(f))
                 self.save(dataset_augmented)
                 self.dataset = MIDILoopDataset(dataset_augmented)

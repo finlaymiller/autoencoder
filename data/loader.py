@@ -21,10 +21,3 @@ class CustomLoader(DataLoader):
             params.shuffle,
             num_workers=params.num_workers,
         )
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        name, image = self.data[idx]
-        return name, image
