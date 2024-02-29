@@ -1,6 +1,7 @@
 import torch
 from torch.nn.functional import pad
 
+import os
 import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -13,12 +14,14 @@ def plot_images(
     images: List[NDArray],
     titles: List[str],
     set_axis: str = "off",
-    outfile: str = "img",
-):
+    output_dir: str = "img",
+    main_title: str = "Image Reconstruction",
+) -> None:
     """Plot images vertically"""
 
     num_images = len(images)
     for num_plot in range(num_images):
+        plt.title(main_title)
         plt.subplot(num_images, 1, num_plot + 1)
         plt.imshow(
             np.squeeze(images[num_plot]),
@@ -30,7 +33,9 @@ def plot_images(
         plt.title(titles[num_plot])
         plt.axis(set_axis)
 
-    plt.savefig({datetime.now().strftime("%y-%m-%d_%H%M%S")})
+    plt.savefig(
+        os.path.join(output_dir, f"{datetime.now().strftime('%y-%m-%d_%H%M%S')}")
+    )
 
 
 def format_image(image: NDArray | torch.Tensor, remove_time=True) -> torch.Tensor:

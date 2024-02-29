@@ -1,4 +1,4 @@
-import torch
+from torch.utils.data import Dataset
 
 import os
 import random
@@ -8,12 +8,12 @@ from tqdm import tqdm
 
 from typing import List
 
-from data.augmentation import vertical_shift, smear
-from utils.image import format_image
+from data.dataset import MIDILoopDataset
+from data.augmentation import vertical_shift, smear, noise
 
 
 class DataAugmenter:
-    dataset: List[tuple]
+    dataset: Dataset
     dataset_name: str
     dataset_path: str
 
@@ -46,26 +46,40 @@ class DataAugmenter:
 
         return f"ad_{self.params.factor}{v_str}{s_str}{n_str}"
 
-    def load(self, do_load: bool = False):
+    def get_clean(self, index: int | None = None) -> tuple:
+        """return an image from the default input dataset"""
+        clean_image = ()
+        if os.path.exists(self.default_set):
+            with np.load(self.default_set) as f:
+                if index is None:
+                    index = int(random.uniform(0, len(list(f.items()))))
+                    clean_image = list(f.items())[index]
+        else:
+            print(f"couldn't find default dataset at {self.dataset_path}")
+            raise FileNotFoundError
+
+        return clean_image
+
+    def load(self) -> bool:
         """Load dataset, first checking to see if one matching the current
         parameters already exists
         """
-        found_dataset = False
-
+        dataset_found = False
         if os.path.exists(self.dataset_path + ".npz"):
             print(
                 f"found a {os.path.getsize(self.dataset_path + '.npz')} dataset matching the current parameters at\n\t{self.dataset_path}\nloading from there"
             )
-            self.dataset = np.load(self.dataset_path + ".npz") if do_load else []
-            found_dataset = True
+            with np.load(self.dataset_path + ".npz") as f:
+                self.dataset = MIDILoopDataset(list(f.items()))
+            dataset_found = True
         else:
             print(
                 f"no dataset found matching the current parameters\n\t{self.dataset_name}"
             )
 
-        return found_dataset
+        return dataset_found
 
-    def save(self, data: List[tuple]):
+    def save(self, data: List):
         """save out newly-augmented dataset to `.npz` file in same directory as input file."""
 
         print(f"saving dataset to \n\t{self.dataset_path}.npz\t")
@@ -80,25 +94,22 @@ class DataAugmenter:
         if os.path.exists(self.dataset_path):
             print(f"successfully wrote {os.path.getsize(self.dataset_path)}B")
         else:
-            raise FileExistsError
+            raise FileNotFoundError
 
-    def augment(self, return_dataset: bool = False) -> List[tuple]:
-        """s"""
-        if not self.load(return_dataset):
+    def augment(self, force_rebuild: bool = False):
+        """augments a set of passed-in images by a factor of $factor^2$"""
+        if not self.load() and force_rebuild:
             print(f"generating new augmentation from {self.default_set}")
 
-            dataset_clean = np.load(self.default_set)
-            dataset_augmented = self._augment(self._n2l(dataset_clean))
-            self.save(dataset_augmented)
-
-            # free up the memory
-            del dataset_clean
-            del dataset_augmented
+            with np.load(self.default_set) as f:
+                dataset_augmented = self._augment(self._n2l(f))
+                self.save(dataset_augmented)
+                self.dataset = MIDILoopDataset(dataset_augmented)
 
             # retry
-            if not self.load(return_dataset):
+            if not self.load():
                 print(f"failed to load new dataset {self.dataset_path}")
-                raise FileExistsError
+                raise FileNotFoundError
 
         return self.dataset
 
@@ -106,7 +117,7 @@ class DataAugmenter:
         self,
         clean_images: List,
     ):
-        """Augments a set of passed-in images by a factor of factor^2"""
+        """internal method"""
         first_pass = []
         second_pass = []
 
@@ -129,18 +140,10 @@ class DataAugmenter:
                     first_pass[i] = (si[0], new_smear)
 
         # add noise to images
-        for si in tqdm(first_pass, unit="images", desc="noising"):
-            new_key, smeared_image = si
+        for ki in tqdm(first_pass, unit="images", desc="noising"):
+            new_key, image = ki
             for _ in range(self.params.factor):
-                # re-normalize
-                smeared_image = smeared_image / np.max(smeared_image)
-                # corrupt
-                noisy_image = torch.from_numpy(
-                    smeared_image
-                ) + self.params.noise_factor * torch.randn(smeared_image.shape)
-                # reformat
-                noisy_image = format_image(noisy_image, remove_time=False)
-
+                noisy_image = noise(image, self.params.noise_factor)
                 second_pass.append((new_key, noisy_image))
 
         random.shuffle(second_pass)

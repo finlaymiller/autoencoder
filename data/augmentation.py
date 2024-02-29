@@ -1,7 +1,11 @@
+import torch
+
 import random
 import numpy as np
 from pathlib import Path
 from PIL import Image
+
+from utils.image import format_image
 
 from typing import List
 from numpy.typing import NDArray
@@ -9,7 +13,7 @@ from numpy.typing import NDArray
 
 def vertical_shift(array, name: str, num_iterations: int = 1) -> List[NDArray]:
     """vertically shift an image
-      NOTE: in some senses, up and down is flipped.
+    NOTE: in some sense, up and down is flipped.
     """
     shifted_images = []
 
@@ -47,7 +51,20 @@ def vertical_shift(array, name: str, num_iterations: int = 1) -> List[NDArray]:
 
 
 def smear(array: NDArray, blur, radius: int = 5) -> NDArray:
+    """uses PIL to apply a filter to an image"""
     image = Image.fromarray(array * 255).convert("L")
     image = image.filter(blur(radius))
 
     return np.asarray(image)
+
+
+def noise(
+    image: NDArray, noise_factor: float = 0.05, reformat: bool = True
+) -> torch.Tensor:
+    """adds noise to an image and formats it"""
+    image = image / np.max(image)
+    noisy_image = torch.from_numpy(image) + noise_factor * torch.randn(image.shape)
+    if reformat:
+        noisy_image = format_image(noisy_image, remove_time=False)
+
+    return noisy_image

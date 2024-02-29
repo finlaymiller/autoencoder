@@ -6,9 +6,9 @@ from typing import List
 class MIDILoopDataset(Dataset):
     def __init__(
         self,
-        data: List,
-        multiplier=1,
+        data,
         transforms=None,
+        multiplier: int=1,
     ):
         self.data = data * multiplier
         self.transforms = transforms

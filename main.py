@@ -1,11 +1,13 @@
 import torch
+from torch.utils.data import DataLoader
+
 from argparse import ArgumentParser
 from omegaconf import OmegaConf
 
 from models.autoencoder import Autoencoder, Encoder, Decoder
 from data.augmenter import DataAugmenter
-from data.loader import CustomLoader
 from train import Trainer
+from utils.printer import Printer
 
 
 if __name__ == "__main__":
@@ -23,21 +25,26 @@ if __name__ == "__main__":
     )
     parser.add_argument("--model", help="which model to train")
     args = parser.parse_args()
-    print("running with arguments", args)
-
     params = OmegaConf.load(args.param_file)
-    print("running with parameters", params)
+
+    print(f"running with arguments:\n{args}")
+    print(f"running with parameters:\n{params}")
 
     augmenter = DataAugmenter(args.data_dir, params.augmenter)
     dataset = augmenter.augment(True)
 
-    loader = CustomLoader(dataset, params.loader)
-
+    loader = DataLoader(
+        dataset,
+        batch_size=params.loader.batch_size,
+        shuffle=params.loader.shuffle,
+        num_workers=params.loader.num_workers,
+    )
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     encoder = Encoder(params.encoder)
     decoder = Decoder(params.decoder)
-    model = Autoencoder(encoder, decoder)
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
+    model = Autoencoder(encoder, decoder).to(device)
     trainer = Trainer(model, params.model_name, loader, device, params.trainer)
+
+    trainer.train()
+    test_label, test_image = augmenter.get_clean()
+    trainer.test_reconstruction(test_image, test_label)

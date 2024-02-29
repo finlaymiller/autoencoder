@@ -13,8 +13,7 @@ from datetime import datetime
 from tqdm import tqdm, trange
 
 from utils.image import format_image, plot_images
-
-from typing import List
+from data.augmentation import noise
 
 
 class Trainer:
@@ -41,10 +40,12 @@ class Trainer:
         self.loss_fn = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.params.learning_rate)
 
+        print(f"using device: {device}")
+
         if os.path.exists(self.params.log_dir):
-            print("Logging directory already exists")
+            print("logging directory already exists")
         else:
-            print(f"Creating new log folder as {self.params.log_dir}")
+            print(f"creating new log folder as {self.params.log_dir}")
             os.makedirs(self.params.log_dir)
 
         self.log_dir = os.path.join(
@@ -97,25 +98,25 @@ class Trainer:
                 loss = running_loss / len(self.train_dl)
                 self.train_loss.append(loss)
 
-    # def test_reconstruction(self, num_tests: int = 1):
-    #     for names, data in self.train_dl:
-    #         img_noisy = data + self.params.noise_factor * torch.randn(data.shape)
-    #         # img_noisy = np.clip(img_noisy, 0.0, 1.0)
-    #         img_noisy = img_noisy.to(self.device)
+        print(f"done training! loss is", self.train_loss)
 
-    #         outputs = self.model(img_noisy)
-    #         og_filename = names[0][: names[0].rfind("_")] + ".mid"
+    def test_reconstruction(self, image, label):
+        """"""
+        print(f"testing {self.model_name} image reconstruction on {label}")
+        noisy_image = noise(image)
+        noisy_image = noisy_image.to(self.device)
 
-    #         images = [
-    #             format_image(clean_dataset[og_filename]),
-    #             img_noisy[0].cpu().data,
-    #             outputs[0].cpu().data,
-    #         ]
-    #         titles = [
-    #             f"{names[0]} (epochs={self.params.epochs})",
-    #             f"noisy ({self.params.noise_factor}% noise)",
-    #             f"reconstructed (loss={loss:.03f})",
-    #         ]
+        output = self.model(noisy_image)
 
-    #         plot_images(images, titles)
-    #         break
+        images = [
+            format_image(image),
+            noisy_image.cpu().data,
+            output.cpu().data,
+        ]
+        titles = [
+            f"{label} (epochs={self.params.epochs})",
+            f"noisy ({self.params.noise_factor}% noise)",
+            f"reconstructed (loss={self.train_loss[-1]:.03f})",
+        ]
+
+        plot_images(images, titles)

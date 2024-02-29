@@ -22,7 +22,7 @@ decoder:
 model_name: "bad autoencoder"
 trainer:
   loss: "mse"
-  epochs: 1
+  epochs: 10
   log_dir: "runs"
   log_tag: "pythonize"
   noise_factor: 0.05
@@ -34,3 +34,10 @@ loader:
   overfit: false
   overfit_index: 0
   overfit_amount: 3200
+modules:
+- "printer"
+- "augmenter"
+- "loader"
+- "model"
+- "trainer"
+
