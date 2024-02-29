@@ -67,7 +67,7 @@ class DataAugmenter:
         dataset_found = False
         if os.path.exists(self.dataset_path + ".npz"):
             print(
-                f"found a {os.path.getsize(self.dataset_path + '.npz')} dataset matching the current parameters at\n\t{self.dataset_path}\nloading from there"
+                f"found a {os.path.getsize(self.dataset_path + '.npz')}B dataset matching the current parameters at\n\t{self.dataset_path}\nloading from there"
             )
             with np.load(self.dataset_path + ".npz") as f:
                 self.dataset = MIDILoopDataset(list(f.items()))

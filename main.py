@@ -32,7 +32,6 @@ if __name__ == "__main__":
 
     augmenter = DataAugmenter(args.data_dir, params.augmenter)
     dataset = augmenter.augment(True)
-
     loader = DataLoader(
         dataset,
         batch_size=params.loader.batch_size,

@@ -2,15 +2,13 @@
 
 import torch
 from torch import nn
-import torch.optim as optim
-import torch.nn.functional as F
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard.writer import SummaryWriter
 
 import os
 from datetime import datetime
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 from utils.image import format_image, plot_images
 from data.augmentation import noise
@@ -65,16 +63,18 @@ class Trainer:
         """Train the model"""
 
         print(
-            f"training for {self.params.epochs} epochs on {len(self.train_dl)} images"
+            f"training for {self.params.epochs} epochs on {len(self.train_dl) * self.params.batch_size} images"
         )
         writer = SummaryWriter(self.log_dir)
 
         self.train_loss = []
-        for epoch in trange(self.params.epochs, desc="Total"):
+        for epoch in range(self.params.epochs):
             running_loss = 0.0
             with tqdm(self.train_dl, unit="batch") as tepoch:
                 for i, (names, images) in enumerate(tepoch):
-                    tepoch.set_description(f"Epoch {epoch+1:02d}")
+                    tepoch.set_description(
+                        f"Epoch {epoch+1:02d}/{self.params.epochs:02d}"
+                    )
                     # train step
                     images = images.to(self.device)
                     self.optimizer.zero_grad()

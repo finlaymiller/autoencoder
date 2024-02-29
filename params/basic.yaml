@@ -31,13 +31,7 @@ loader:
   batch_size: 32
   shuffle: true
   num_workers: 4
-  overfit: false
+  overfit: true
   overfit_index: 0
   overfit_amount: 3200
-modules:
-- "printer"
-- "augmenter"
-- "loader"
-- "model"
-- "trainer"
 
