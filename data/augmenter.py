@@ -89,10 +89,8 @@ class DataAugmenter:
             **{name: arr for name, arr in data},
         )
 
-        self.dataset_path += ".npz"
-
-        if os.path.exists(self.dataset_path):
-            print(f"successfully wrote {os.path.getsize(self.dataset_path)}B")
+        if os.path.exists(self.dataset_path + ".npz"):
+            print(f"successfully wrote {os.path.getsize(self.dataset_path + '.npz')}B")
         else:
             raise FileNotFoundError
 
@@ -106,7 +104,7 @@ class DataAugmenter:
                 self.save(dataset_augmented)
                 self.dataset = MIDILoopDataset(dataset_augmented)
 
-            # retry
+            # ensure that data was written correctly
             if not self.load():
                 print(f"failed to load new dataset {self.dataset_path}")
                 raise FileNotFoundError

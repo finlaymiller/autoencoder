@@ -38,7 +38,9 @@ class Trainer:
         self.params = params
         self.device = device
         self.loss_fn = nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.params.learning_rate)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=self.params.learning_rate
+        )
 
         print(f"using device: {device}")
 
@@ -62,7 +64,9 @@ class Trainer:
     def train(self) -> None:
         """Train the model"""
 
-        print(f"training for {self.params.epochs} epochs")
+        print(
+            f"training for {self.params.epochs} epochs on {len(self.train_dl)} images"
+        )
         writer = SummaryWriter(self.log_dir)
 
         self.train_loss = []
@@ -83,6 +87,7 @@ class Trainer:
                     # update loss tracking
                     running_loss += loss.item()
                     tepoch.set_postfix(loss=f"{loss.item():03f}")
+
                     # log to tensorboard
                     global_step = epoch * len(self.train_dl) + i
                     writer.add_scalar("training/loss", loss.item(), global_step)
@@ -100,7 +105,7 @@ class Trainer:
 
         print(f"done training! loss is", self.train_loss)
 
-    def test_reconstruction(self, image, label):
+    def test_reconstruction(self, image, label: str, run_file=None) -> None:
         """"""
         print(f"testing {self.model_name} image reconstruction on {label}")
         noisy_image = noise(image)
@@ -119,4 +124,4 @@ class Trainer:
             f"reconstructed (loss={self.train_loss[-1]:.03f})",
         ]
 
-        plot_images(images, titles)
+        plot_images(images, titles, main_title=f"{run_file}")

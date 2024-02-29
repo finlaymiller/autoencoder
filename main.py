@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 from omegaconf import OmegaConf
 
-from models.autoencoder import Autoencoder, Encoder, Decoder
+from models.autoencoder import AutoEncoder, Encoder, Decoder
 from data.augmenter import DataAugmenter
 from train import Trainer
 from utils.printer import Printer
@@ -42,9 +42,10 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     encoder = Encoder(params.encoder)
     decoder = Decoder(params.decoder)
-    model = Autoencoder(encoder, decoder).to(device)
+    model = AutoEncoder().to(device)
+    # model = Autoencoder(encoder, decoder).to(device)
     trainer = Trainer(model, params.model_name, loader, device, params.trainer)
 
     trainer.train()
     test_label, test_image = augmenter.get_clean()
-    trainer.test_reconstruction(test_image, test_label)
+    trainer.test_reconstruction(test_image, test_label, args.param_file)

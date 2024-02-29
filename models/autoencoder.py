@@ -4,6 +4,41 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
+class AutoEncoder(nn.Module):
+    def __init__(self):
+        super(AutoEncoder, self).__init__()
+
+        # Encoder layers
+        self.enc1 = nn.Conv2d(1, 64, kernel_size=3, padding=1)
+        self.enc2 = nn.Conv2d(64, 32, kernel_size=3, padding=1)
+        self.enc3 = nn.Conv2d(32, 16, kernel_size=3, padding=1)
+        self.enc4 = nn.Conv2d(16, 8, kernel_size=3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+
+        # Decoder layers
+        self.dec1 = nn.ConvTranspose2d(8, 8, kernel_size=3, stride=2)
+        self.dec2 = nn.ConvTranspose2d(8, 16, kernel_size=3, stride=2)
+        self.dec3 = nn.ConvTranspose2d(16, 32, kernel_size=2, stride=2)
+        self.dec4 = nn.ConvTranspose2d(32, 64, kernel_size=2, stride=2)
+        self.out = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        # Encoder
+        x = self.pool(F.silu(self.enc1(x)))
+        x = self.pool(F.silu(self.enc2(x)))
+        x = self.pool(F.silu(self.enc3(x)))
+        x = self.pool(F.silu(self.enc4(x)))
+
+        # Decoder
+        x = F.silu(self.dec1(x))
+        x = F.silu(self.dec2(x))
+        x = F.silu(self.dec3(x))
+        x = F.silu(self.dec4(x))
+        x = F.silu(self.out(x))
+
+        return x
+
+
 class Autoencoder(nn.Module):
     def __init__(
         self,
@@ -64,10 +99,7 @@ class Autoencoder(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(
-        self,
-        params
-    ):
+    def __init__(self, params):
         """Encoder
 
         Args:
@@ -108,10 +140,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(
-        self,
-        params
-    ):
+    def __init__(self, params):
         """Decoder
 
         Args:

@@ -13,15 +13,16 @@ from numpy.typing import NDArray
 def plot_images(
     images: List[NDArray],
     titles: List[str],
+    main_title = None,
     set_axis: str = "off",
     output_dir: str = "img",
-    main_title: str = "Image Reconstruction",
 ) -> None:
     """Plot images vertically"""
-
+    plt.style.use("dark_background")
     num_images = len(images)
+    if main_title:
+        plt.suptitle(main_title)
     for num_plot in range(num_images):
-        plt.title(main_title)
         plt.subplot(num_images, 1, num_plot + 1)
         plt.imshow(
             np.squeeze(images[num_plot]),
@@ -33,9 +34,13 @@ def plot_images(
         plt.title(titles[num_plot])
         plt.axis(set_axis)
 
+    outfile_name = f"{datetime.now().strftime('%y-%m-%d_%H%M%S')}"
+
     plt.savefig(
-        os.path.join(output_dir, f"{datetime.now().strftime('%y-%m-%d_%H%M%S')}")
+        os.path.join(output_dir, outfile_name)
     )
+
+    print(f"saved output in '{os.path.join(output_dir, outfile_name)}'")
 
 
 def format_image(image: NDArray | torch.Tensor, remove_time=True) -> torch.Tensor:

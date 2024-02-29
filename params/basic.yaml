@@ -1,7 +1,7 @@
 augmenter:
-  factor: 1
+  factor: 10
   do_vshift: true
-  do_smear: true
+  do_smear: false
   smear_radius: 3
   smear_filter: "max"
   do_noise: true
