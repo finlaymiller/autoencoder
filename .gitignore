@@ -1,7 +1,7 @@
 video
 runs
 input_data
-__pycache__
+**/__pycache__
 
 .venv
 .ipynb_checkpoints
